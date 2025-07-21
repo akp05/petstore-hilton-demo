@@ -4,3 +4,8 @@ This project focus is to create an working application with processes similar to
 
 AI agent in consideration:
 1. Cursor
+
+
+Observations:
+1. Create a new project with and debugging related to dependency is hard and even halucinate. 
+2. Can't give prompt like it doesn't work need to give specific prompt like run mvn compile and fix if the issues are there.
