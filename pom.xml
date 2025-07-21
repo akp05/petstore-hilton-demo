@@ -104,7 +104,7 @@
                     <goal>generate</goal>
                   </goals>
                   <configuration>
-                    <inputSpec>${project.basedir}/petstore-${swagger.current.version}.yaml</inputSpec>
+                    <inputSpec>${project.basedir}/petstore-${swagger.new.version}.yaml</inputSpec>
                     <language>spring</language>
                     <output>${project.build.directory}/new</output>
                   </configuration>
