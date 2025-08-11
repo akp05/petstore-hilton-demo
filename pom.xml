@@ -10,9 +10,9 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <swagger.current.version>1.0.0</swagger.current.version>
-        <swagger.new.version>1.0.0</swagger.new.version>
+        <swagger.new.version>2.0.0</swagger.new.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <springdoc.version>2.2.0</springdoc.version>
+        <springdoc.version>2.5.0</springdoc.version>
         <swagger-ui.version>5.3.1</swagger-ui.version>
     </properties>
     <parent>
@@ -128,10 +128,6 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
         </dependency>
         <!--SpringFox dependencies -->
@@ -152,11 +148,6 @@
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
             <version>4.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
@@ -191,11 +182,6 @@
             <artifactId>rest-assured</artifactId>
             <version>5.4.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
