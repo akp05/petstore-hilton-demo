@@ -5,7 +5,6 @@
  */
 package org.openapitools.api;
 
-import org.openapitools.model.ModelApiResponse;
 import org.openapitools.model.Pet;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-07-21T14:17:31.393929+05:30[Asia/Kolkata]", comments = "Generator version: 7.6.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-08-12T01:40:17.501326+05:30[Asia/Kolkata]", comments = "Generator version: 7.6.0")
 @Validated
 @Tag(name = "pet", description = "Everything about your Pets")
 public interface PetApi {
@@ -263,7 +262,7 @@ public interface PetApi {
                 }
             }
         });
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
 
     }
 
@@ -333,53 +332,6 @@ public interface PetApi {
         @Parameter(name = "name", description = "Updated name of the pet") @Valid @RequestParam(value = "name", required = false) String name,
         @Parameter(name = "status", description = "Updated status of the pet") @Valid @RequestParam(value = "status", required = false) String status
     ) {
-        return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-
-    }
-
-
-    /**
-     * POST /pet/{petId}/uploadImage : uploads an image
-     *
-     * @param petId ID of pet to update (required)
-     * @param additionalMetadata Additional data to pass to server (optional)
-     * @param file file to upload (optional)
-     * @return successful operation (status code 200)
-     */
-    @Operation(
-        operationId = "uploadFile",
-        summary = "uploads an image",
-        tags = { "pet" },
-        responses = {
-            @ApiResponse(responseCode = "200", description = "successful operation", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = ModelApiResponse.class))
-            })
-        },
-        security = {
-            @SecurityRequirement(name = "petstore_auth", scopes={ "write:pets", "read:pets" })
-        }
-    )
-    @RequestMapping(
-        method = RequestMethod.POST,
-        value = "/pet/{petId}/uploadImage",
-        produces = { "application/json" },
-        consumes = { "multipart/form-data" }
-    )
-    
-    default ResponseEntity<ModelApiResponse> uploadFile(
-        @Parameter(name = "petId", description = "ID of pet to update", required = true, in = ParameterIn.PATH) @PathVariable("petId") Long petId,
-        @Parameter(name = "additionalMetadata", description = "Additional data to pass to server") @Valid @RequestParam(value = "additionalMetadata", required = false) String additionalMetadata,
-        @Parameter(name = "file", description = "file to upload") @RequestPart(value = "file", required = false) MultipartFile file
-    ) {
-        getRequest().ifPresent(request -> {
-            for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
-                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
-                    String exampleString = "{ \"code\" : 0, \"type\" : \"type\", \"message\" : \"message\" }";
-                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
-                    break;
-                }
-            }
-        });
         return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
 
     }

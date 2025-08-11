@@ -1,6 +1,5 @@
 package org.openapitools.api;
 
-import org.openapitools.model.ModelApiResponse;
 import org.openapitools.model.Pet;
 
 
@@ -25,9 +24,10 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Arrays;
 import jakarta.annotation.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-07-21T14:17:31.393929+05:30[Asia/Kolkata]", comments = "Generator version: 7.6.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-08-12T01:40:17.501326+05:30[Asia/Kolkata]", comments = "Generator version: 7.6.0")
 @Controller
 @RequestMapping("${openapi.swaggerPetstore.base-path:/v2}")
 public class PetApiController implements PetApi {
@@ -42,6 +42,13 @@ public class PetApiController implements PetApi {
     @Override
     public Optional<NativeWebRequest> getRequest() {
         return Optional.ofNullable(request);
+    }
+
+    @Override
+    public ResponseEntity<Pet> getPetById(@PathVariable("petId") Long petId) {
+        Pet pet = new Pet("doggie", Arrays.asList("photoUrls"));
+        pet.setId(petId);
+        return ResponseEntity.ok(pet);
     }
 
 }
