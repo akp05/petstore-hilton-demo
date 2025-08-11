@@ -1,0 +1,4 @@
+---
+description: Whenever java code is generated either in src/main or src/test this must be followed
+alwaysApply: true
+---

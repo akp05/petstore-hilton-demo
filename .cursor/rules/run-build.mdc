@@ -1,0 +1,11 @@
+---
+alwaysApply: false
+description: Perform a clean build and run tests; offer fallback if tests fail
+---
+
+- Execute a clean verify:
+  ```bash
+  mvn -B clean verify
+  ```
+- If tests fail:
+  - Inspect failures, fix tests or dependencies, then re-run the build.

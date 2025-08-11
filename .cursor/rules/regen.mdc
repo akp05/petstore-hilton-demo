@@ -1,0 +1,85 @@
+---
+alwaysApply: false
+description: Regenerate sources from OpenAPI, update BOM/property versions, copy generated sources, format, then build
+---
+
+### Preconditions
+- Clean Git working tree.
+- JDK 21 and Maven installed.
+- Project root contains [pom.xml](mdc:pom.xml).
+- Maven profile `generate-swagger-versions` is defined (see [pom.xml](mdc:pom.xml)).
+
+### Steps
+
+1. Show available updates (save reports)
+   ```bash
+   mvn -B versions:display-dependency-updates -DoutputFile=target/dependency-updates.txt
+   mvn -B versions:display-plugin-updates -DoutputFile=target/plugin-updates.txt
+   ```
+   - Review `target/dependency-updates.txt` and `target/plugin-updates.txt`.
+
+2. Update BOMs and version properties (not transitive or parent-managed)
+   - Update BOMs (BOM-first preference):
+     ```bash
+     mvn -B versions:use-latest-releases \
+       -Dincludes=org.springframework.boot:spring-boot-dependencies,org.junit:junit-bom \
+       -DgenerateBackupPoms=false
+     ```
+   - Update explicit version properties (if present):
+     ```bash
+     mvn -B versions:update-properties \
+       -DincludeProperties=springdoc.version,swagger-ui.version \
+       -DallowMajorUpdates=true \
+       -DgenerateBackupPoms=false
+     ```
+   - Do not change versions managed by parent POMs or transitive dependencies.
+
+3. Set target OpenAPI spec version
+   - Prompt the user: "Provide the version for the new OpenAPI spec file (e.g., 3.0.0). Reply with the version only."
+   - This value will be written to `<swagger.new.version>` in [pom.xml](mdc:pom.xml).
+   - If the intent is different (e.g., "SpringDoc UI library version" vs "OpenAPI spec file version"), clarify before proceeding.
+
+4. Write `swagger.new.version` in [pom.xml](mdc:pom.xml)
+   - Ensure under `<properties>`:
+     - `<swagger.current.version>` remains the current in-use spec version.
+     - `<swagger.new.version>` is set to the user-provided version.
+
+5. Generate sources with the profile
+   ```bash
+   mvn -B clean generate-sources -Pgenerate-swagger-versions
+   ```
+   - Expected outputs per [pom.xml](mdc:pom.xml):
+     - V1 (current): `target/generated-sources/openapi-v1`
+     - V3 (new): `target/generated-sources/openapi-v3`
+
+6. Copy the generated "new" sources into the project
+   - Copy only changed/new files from:
+     - `target/generated-sources/openapi-v3/src/main/java` → `src/main/java`
+     - `target/generated-sources/openapi-v3/src/main/resources` → `src/main/resources`
+   - Prefer a diff-first approach, then copy on top. Do not delete custom code.
+
+7. Format code
+   - Run the shared formatter rule:
+     - `@format.mdc`
+
+8. Optional project version bump
+   ```bash
+   mvn -B versions:set -DnewVersion=<project_version> -DgenerateBackupPoms=false
+   mvn -B versions:commit
+   ```
+
+9. Build and handle failures
+   - Run:
+     - `@run-build.mdc`
+   - On failure:
+     - Show the last 200 lines of the build log.
+     - Revert only `pom.xml` changes if the failure is due to version bumps:
+       ```bash
+       git checkout -- pom.xml
+       ```
+     - Keep generated diffs for inspection; do not auto-delete copied sources unless requested.
+
+### Notes
+- Properties in [pom.xml](mdc:pom.xml): `<swagger.current.version>`, `<swagger.new.version>`, `<springdoc.version>`, `<swagger-ui.version>`
+- OpenAPI generator profile id: `generate-swagger-versions`
+- Output folders: `target/generated-sources/openapi-v1` and `target/generated-sources/openapi-v3`
