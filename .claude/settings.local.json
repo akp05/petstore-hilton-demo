@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(diff:*)",
+      "Bash(mvn:*)",
+      "Bash(fc:*)",
+      "Bash(rm:*)",
+      "Bash(mvn clean:*)",
+      "Bash(java:*)"
+    ],
+    "deny": []
+  }
+}
