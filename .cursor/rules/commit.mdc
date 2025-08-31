@@ -54,34 +54,19 @@ description: Validate, then commit and push with minimal prompts
    fi
    ```
 
-7. Optimization and test gap suggestions (actionable, per-change)
-   - Optimization suggestions (automated):
+7. Optimization suggestions and missed tests (simple)
+   - Optimization suggestions (lightweight; no extra tools):
    ```bash
-   # Run PMD with performance, best-practices, and error-prone rules
-   mvn -B org.apache.maven.plugins:maven-pmd-plugin:3.25.0:pmd \
-     -Dpmd.rulesets=category/java/performance.xml,category/java/bestpractices.xml,category/java/errorprone.xml
-   # Summarize suggestions (file:line – rule – message)
-   xmllint --xpath \
-     'string-join(//pmd:file/pmd:violation/concat(../../@name, ":", @beginline, " – ", @rule, " – ", normalize-space(text()), "\n"), "")' \
-     target/pmd.xml 2>/dev/null | head -n 50 | tee target/optimization-suggestions.txt || \
-     echo "No PMD suggestions (or xmllint unavailable). See target/pmd.xml"
+   CHANGED=$(git diff --name-only | grep '^src/main/java/.*\.java$' || true)
+   if [ -z "$CHANGED" ]; then CHANGED=$(git ls-files src/main/java | grep '\.java$'); fi
+   echo "Potential hotspots (loops/streams in changed files):"
+   grep -nE 'for \(|\.stream\(' $CHANGED 2>/dev/null | head -n 200 | tee target/optimization-suggestions.txt || \
+     echo "No obvious hotspots found"
    ```
-   - Missed tests / edge cases (automated, coverage-based):
+   - Missed tests / edge cases (coverage report path only):
    ```bash
-   # Generate JaCoCo report (does not fail build)
    mvn -B org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report
-   # List classes under 80% line coverage
-   if [ -f target/site/jacoco/jacoco.xml ]; then \
-     awk -F '"' '
-       /<package name=/{pkg=$2}
-       /<class name=/{cls=$2}
-       /<counter type=\"LINE\"/{
-         for(i=1;i<=NF;i++){if($i=="missed"){miss=$(i+2)}; if($i=="covered"){cov=$(i+2)}}
-         total=miss+cov; if(total>0){pct=int((cov*100)/total); if(pct<80){print pkg"/"cls" "pct"%"}}
-       }' target/site/jacoco/jacoco.xml | sort -k2,2n | tee target/test-gaps.txt; \
-   else \
-     echo "No jacoco.xml found. Configure JaCoCo to enable test gap detection."; \
-   fi
+   echo "JaCoCo report: target/site/jacoco/index.html"
    ```
 
 8. Commit and push
