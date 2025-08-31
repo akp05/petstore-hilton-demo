@@ -54,20 +54,26 @@ description: Validate, then commit and push with minimal prompts
    fi
    ```
 
-7. Optimization suggestions and missed tests (simple)
-   - Optimization suggestions (lightweight; no extra tools):
-   ```bash
-   CHANGED=$(git diff --name-only | grep '^src/main/java/.*\.java$' || true)
-   if [ -z "$CHANGED" ]; then CHANGED=$(git ls-files src/main/java | grep '\.java$'); fi
-   echo "Potential hotspots (loops/streams in changed files):"
-   grep -nE 'for \(|\.stream\(' $CHANGED 2>/dev/null | head -n 200 | tee target/optimization-suggestions.txt || \
-     echo "No obvious hotspots found"
-   ```
-   - Missed tests / edge cases (coverage report path only):
+7. Optimization suggestions and endpoint coverage (focused)
+   - Optimization suggestions (apply when relevant):
+     - For ID-based retrieval, use `Map<Long, T>` over list scans
+     - Seed data once and reuse; avoid per-request rebuilds
+     - Prefer single-threaded streams; avoid parallel unless CPU-bound with measured gains
+     - Expose immutable/unmodifiable collections for shared read-only data
+   - Endpoint coverage check (edit CLASS/METHOD as needed):
    ```bash
    mvn -B org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report
-   echo "JaCoCo report: target/site/jacoco/index.html"
+   CLASS=org/openapitools/api/PetApiController
+   METHOD=getPetById
+   XML=target/site/jacoco/jacoco.xml
+   echo "Coverage for $CLASS.$METHOD"
+   echo -n "LINE missed/covered: "
+   xmllint --xpath 'concat(//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="LINE"]/@missed,"/",//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="LINE"]/@covered)' "$XML" 2>/dev/null || echo "n/a"
+   echo -n "BRANCH missed/covered: "
+   xmllint --xpath 'concat(//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="BRANCH"]/@missed,"/",//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="BRANCH"]/@covered)' "$XML" 2>/dev/null || echo "n/a"
+   echo "Full report: target/site/jacoco/index.html"
    ```
+   - If branch misses are non-zero, add tests for alternate paths (e.g., not-found branch, config flag path)
 
 8. Commit and push
    - Prompt: "Provide the commit message (plain text only). Reply with the message only."
