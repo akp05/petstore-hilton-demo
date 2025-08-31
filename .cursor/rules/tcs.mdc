@@ -17,6 +17,9 @@ alwaysApply: false
 - Desired behavior (what to add/change)
 - Affected layer(s): model, service, controller, configuration
 - For REST: HTTP method, path, params/body, success status, key response fields
+- Optional two-part format to also define tests in one statement:
+  - Implement: <implementation statement>
+  - Test: <integration test statement>
 
 ### Decision guide
 - If the change adds/changes a REST endpoint that should be part of the contract:
@@ -54,6 +57,8 @@ alwaysApply: false
    ```
 
 5) Optional: generate integration tests for the new behavior
+   - If the original statement contained a "Test:" part, pass that as the test statement
+   - Otherwise, reuse the "Implement:" (or whole) statement to derive tests
 ```bash
 @ffis.mdc
 ```

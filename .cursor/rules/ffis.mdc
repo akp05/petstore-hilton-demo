@@ -12,6 +12,7 @@ alwaysApply: false
 - Expected HTTP status and key response assertions
 - Optional: feature file name and scenario name; otherwise infer
 - Optional: external dependencies to mock; otherwise infer
+ - If invoked from `@tcs.mdc` with a combined statement that includes a `Test:` section, use only the content after `Test:` as the source of truth for the test steps
 
 ### Outputs
 - Feature: `src/test/resources/features/<kebab-feature-name>.feature` (append scenario if file exists)
