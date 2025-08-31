@@ -54,9 +54,19 @@ description: Validate, then commit and push with minimal prompts
    fi
    ```
 
-7. Quick manual checks (optional, for awareness)
-- Consider optimizing any newly added code (e.g., streams, appropriate data structures)
-- Ensure tests exist for newly added code and edge cases
+7. Optimization checks (performance + manual review)
+   - Automated flags (PMD performance + best practices); report at `target/pmd.xml`
+   ```bash
+   mvn -B org.apache.maven.plugins:maven-pmd-plugin:3.25.0:pmd \
+     -Dpmd.rulesets=category/java/performance.xml,category/java/bestpractices.xml
+   echo "PMD performance/best-practices report: target/pmd.xml"
+   ```
+   - Manual review checklist:
+     - Prefer Map lookups over linear List scans for ID-based retrievals
+     - Avoid recreating static seed data on each request; initialize once (bean init)
+     - Extract reusable logic into `@Service` classes; use constructor injection
+     - Avoid unnecessary object creation in loops and hot paths
+     - Ensure new code paths have tests for happy path and edge cases
 
 8. Commit and push
    - Prompt: "Provide the commit message (plain text only). Reply with the message only."
