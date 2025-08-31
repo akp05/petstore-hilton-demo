@@ -1,0 +1,81 @@
+---
+alwaysApply: false
+description: Validate, then commit and push with minimal prompts
+---
+
+### Preconditions
+- JDK 21 and Maven installed
+- Git remotes configured and authenticated (e.g., `origin`)
+
+### Steps
+
+1. Build and test the project
+   - Runs the standard build and tests rule
+   ```bash
+   @run-build.mdc
+   ```
+
+2. Remove unused imports and trivial unused code (auto‑fix)
+   - Applies OpenRewrite recipes in-place
+   ```bash
+   mvn -B org.openrewrite.maven:rewrite-maven-plugin:5.41.0:run \
+     -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-java:1.31.0 \
+     -Drewrite.activeRecipes=org.openrewrite.staticanalysis.RemoveUnusedImports,org.openrewrite.staticanalysis.UnusedLocalVariables,org.openrewrite.staticanalysis.UnusedPrivateMethod
+   ```
+
+3. Scan for severe third‑party vulnerabilities (CVSS ≥ 7)
+   - Generates reports under `target/`
+   - Fails if severe issues are found
+   ```bash
+   mvn -B org.owasp:dependency-check-maven:9.2.0:check \
+     -Dformats=HTML,JSON \
+     -DfailOnCVSS=7 \
+     -DoutputDirectory=target
+   ```
+
+4. Scan code for OWASP Top 10 categories (SAST)
+   - Uses PMD security rules; fails on violations; reports under `target/`
+   ```bash
+   mvn -B org.apache.maven.plugins:maven-pmd-plugin:3.25.0:check \
+     -Dpmd.rulesets=category/java/security.xml
+   ```
+
+5. Static analysis for potential null pointer issues (SpotBugs)
+   - High threshold, max effort; fails on detected high‑priority bugs
+   - Report: `target/spotbugsXml.xml` (and `target/site/spotbugs.html` if site is generated)
+   ```bash
+   mvn -B com.github.spotbugs:spotbugs-maven-plugin:4.8.3.0:spotbugs \
+     -Dspotbugs.threshold=High \
+     -Dspotbugs.effort=Max \
+     -DfailOnError=true
+   ```
+
+6. Code coverage (informational)
+   - If a JaCoCo report exists, print its location; otherwise continue
+   ```bash
+   if [ -f target/site/jacoco/index.html ]; then \
+     echo "JaCoCo coverage report: target/site/jacoco/index.html"; \
+   else \
+     echo "No JaCoCo report found (plugin not configured)"; \
+   fi
+   ```
+
+7. Quick manual checks (optional, for awareness)
+- Consider optimizing any newly added code (e.g., streams, appropriate data structures)
+- Ensure tests exist for newly added code and edge cases
+
+8. Commit and push
+   - Prompt: "Provide the commit message (plain text only). Reply with the message only."
+   - Then run:
+   ```bash
+   git add -A
+   git commit -m "<commit message>"
+   git push
+   ```
+
+### Notes
+- All steps above are non‑interactive except for the final commit message prompt
+- OWASP and SpotBugs steps intentionally fail the flow on serious findings so issues are addressed before pushing
+
+
+
