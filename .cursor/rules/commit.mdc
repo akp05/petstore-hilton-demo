@@ -28,19 +28,18 @@ description: Validate, then commit and push with minimal prompts
    mvn -B org.sonatype.ossindex.maven:ossindex-maven-plugin:3.3.0:audit -Dossindex.fail=true
    ```
 
-4. Scan code for OWASP Top 10 categories (SAST)
-   - Uses PMD security rules; fails on violations; reports under `target/`
+4. SAST and code style (security + UnnecessaryImport/FQN)
+   - Runs PMD security rules and selected code-style checks; fails on violations; report at `target/pmd.xml`
    ```bash
    mvn -B org.apache.maven.plugins:maven-pmd-plugin:3.25.0:check \
-     -Dpmd.rulesets=category/java/security.xml
+     -Dpmd.rulesets=category/java/security.xml,category/java/codestyle.xml/UnnecessaryImport,category/java/codestyle.xml/UnnecessaryFullyQualifiedName
    ```
 
-5. Static analysis for potential null pointer issues (SpotBugs)
-   - High threshold, max effort; fails on detected high‑priority bugs
-   - Report: `target/spotbugsXml.xml` (and `target/site/spotbugs.html` if site is generated)
+5. Bug finding (SpotBugs) for NPEs and common bugs
+   - Low threshold, max effort; fails on detected issues; report at `target/spotbugsXml.xml`
    ```bash
    mvn -B com.github.spotbugs:spotbugs-maven-plugin:4.8.3.0:spotbugs \
-     -Dspotbugs.threshold=High \
+     -Dspotbugs.threshold=Low \
      -Dspotbugs.effort=Max \
      -DfailOnError=true
    ```
