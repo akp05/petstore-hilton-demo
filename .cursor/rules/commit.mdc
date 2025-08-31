@@ -15,24 +15,11 @@ description: Validate, then commit and push with minimal prompts
    @run-build.mdc
    ```
 
-2. Check unused imports and trivial unused code (informational, no fail)
-   - Generates a minimal PMD report focused on unused findings
+2. Remove unused imports (auto‑fix)
+   - Uses a built-in OpenRewrite recipe; no external artifacts
    ```bash
-   mkdir -p config/pmd
-   cat > config/pmd/unused.xml <<'EOF'
-   <?xml version="1.0"?>
-   <ruleset name="unused-only" xmlns="https://pmd.github.io/pmd-7.0.0/ruleset"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="https://pmd.github.io/pmd-7.0.0/ruleset https://pmd.github.io/pmd-7.0.0/ruleset_7_0_0.xsd">
-     <description>Only unused findings</description>
-     <rule ref="category/java/bestpractices.xml/UnusedImports"/>
-     <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
-     <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
-     <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
-   </ruleset>
-   EOF
-   mvn -B org.apache.maven.plugins:maven-pmd-plugin:3.25.0:pmd -Dpmd.rulesets=config/pmd/unused.xml
-   echo "PMD unused report: target/pmd.xml"
+   mvn -B org.openrewrite.maven:rewrite-maven-plugin:5.41.0:run \
+     -Drewrite.activeRecipes=org.openrewrite.java.RemoveUnusedImports
    ```
 
 3. Scan for severe third‑party vulnerabilities (CVSS ≥ 7)
