@@ -53,63 +53,15 @@ alwaysApply: false
    @format.mdc
    ```
 
-5) Build and test
-```bash
-@run-build.mdc
-```
-
-6) Optional: generate integration tests for the new behavior
+5) Optional: generate integration tests for the new behavior
 ```bash
 @ffis.mdc
 ```
 
-### Service template (Java)
-```java
-package org.openapitools.service;
-
-import org.springframework.stereotype.Service;
-
-/**
- * Provides operations related to pets.
- */
-@Service
-public class PetLookupService {
-    /**
-     * Find a pet name by its identifier.
-     * @param petId unique pet identifier
-     * @return the pet name if found, otherwise an empty Optional
-     */
-    public java.util.Optional<String> findPetNameById(long petId) {
-        // Implement minimal required logic
-        return java.util.Optional.empty();
-    }
-}
-```
-
-### Controller wiring example (Java)
-```java
-package org.openapitools.api;
-
-import org.openapitools.service.PetLookupService;
-import org.springframework.http.ResponseEntity;
-
-public class PetApiController {
-    private final PetLookupService petLookupService;
-
-    public PetApiController(PetLookupService petLookupService) {
-        this.petLookupService = petLookupService;
-    }
-
-    /**
-     * Get pet name by id
-     */
-    public ResponseEntity<String> getPetNameById(Long petId) {
-        return petLookupService.findPetNameById(petId)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-}
-```
+### Templates
+- See `@coding-standard.mdc` for:
+  - Service template (Java)
+  - Controller wiring example (Java)
 
 ### Notes
 - Do not place custom logic directly inside generated code blocks that may be overwritten by regeneration. Prefer delegating to services/components you control.
