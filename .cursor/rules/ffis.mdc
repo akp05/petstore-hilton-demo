@@ -1,0 +1,126 @@
+---
+description: Convert natural language statements into runnable Cucumber integration tests
+globs:
+alwaysApply: false
+---
+
+### Purpose
+- When the user says e.g., "Create an integration test for GET /v2/pet/{id} that returns 200 and name present", generate/extend a Cucumber feature and matching step definitions that run as Spring Boot integration tests against the app.
+
+### Inputs (from the user's statement)
+- Target API or behavior (HTTP method, path, params/body if REST)
+- Expected HTTP status and key response assertions
+- Optional: feature file name and scenario name; otherwise infer
+- Optional: external dependencies to mock; otherwise infer
+
+### Outputs
+- Feature: `src/test/resources/features/<kebab-feature-name>.feature` (append scenario if file exists)
+- Steps: `src/test/java/org/openapitools/<FeatureName>StepDefinitions.java` (create or extend)
+- Optional mocks: `src/test/resources/mocks/<context>/...` JSON or stub payloads
+
+### Conventions
+- Package glue: `org.openapitools` (see `CucumberIT`)
+- Base URL: `http://localhost:${local.server.port}/v2`
+- Use Spring Boot test with RANDOM_PORT and RestAssured
+- Follow coding standard: prefer constructor injection if beans are needed
+
+### Procedure
+1) Parse the statement and decide test type
+   - If it references HTTP endpoints, treat as REST integration test.
+
+2) Create/extend the Feature file
+   - Name: derive from resource (e.g., `pet_api.feature`). Place under `src/test/resources/features/`.
+   - Add a Scenario with Given/When/Then steps using clear Cucumber phrases.
+
+3) Create/extend Step Definitions
+   - File: `<ResourceName>StepDefinitions.java` in `src/test/java/org/openapitools/`.
+   - Ensure class is annotated with `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)` and uses `@LocalServerPort`.
+   - Implement steps using RestAssured with baseUri `http://localhost:" + port + "/v2`.
+
+4) External calls
+   - If the service calls third-party APIs, create placeholder mock payloads under `src/test/resources/mocks/` and reference them from steps.
+   - Prefer in-memory stubs or local WireMock if available; otherwise, leave a clear TODO step for mocking and do not fail generation.
+
+5) Verify
+   - Run the build/tests to ensure the new test compiles and runs:
+   ```bash
+   @run-build.mdc
+   ```
+
+### Feature template (append or create)
+```
+Feature: <Readable Feature Name>
+  Scenario: <Short behavior description>
+    Given a resource context for "<entity>"
+    When I call <HTTP_METHOD> <PATH> with body "<optional-json>"
+    Then the response status should be <STATUS_CODE>
+    And the response should contain "<json-path>" equal to "<expected>"
+```
+
+### Step Definitions template (Java)
+```java
+package org.openapitools;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import io.restassured.response.Response;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class <FeatureName>StepDefinitions {
+    private Response response;
+
+    @LocalServerPort
+    private int port;
+
+    @Given("a resource context for \"{string}\"")
+    public void a_resource_context_for(String entity) {
+        // Optionally seed data or load mocks
+    }
+
+    @When("I call {word} {string} with body \"{string}\"")
+    public void i_call_with_body(String method, String path, String bodyAlias) {
+        String base = "http://localhost:" + port + "/v2";
+        switch (method.toUpperCase()) {
+            case "GET":
+                response = given().baseUri(base).when().get(path);
+                break;
+            case "POST":
+                response = given().baseUri(base).contentType("application/json").body(bodyAlias).when().post(path);
+                break;
+            case "PUT":
+                response = given().baseUri(base).contentType("application/json").body(bodyAlias).when().put(path);
+                break;
+            case "DELETE":
+                response = given().baseUri(base).when().delete(path);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported method: " + method);
+        }
+    }
+
+    @Then("the response status should be {int}")
+    public void the_response_status_should_be(int statusCode) {
+        response.then().statusCode(statusCode);
+    }
+
+    @Then("the response should contain \"{string}\" equal to \"{string}\"")
+    public void the_response_should_contain_equal_to(String jsonPath, String expected) {
+        response.then().body(jsonPath, equalTo(expected));
+    }
+}
+```
+
+### Example mapping
+- User: "Create an integration test that GET /v2/pet/1 returns 200 and has a name"
+  - Feature: append to `pet_api.feature` with a Scenario using steps above
+  - Steps: ensure `PetApiStepDefinitions.java` has the needed methods (reuse if present)
+
+### Notes
+- Keep feature steps high-level and expressive; keep HTTP details in step definitions.
+- Prefer reusing existing step definitions to avoid duplication. If a matching step exists, do not re-create it; only add missing ones.
