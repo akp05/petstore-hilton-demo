@@ -54,26 +54,35 @@ description: Validate, then commit and push with minimal prompts
    fi
    ```
 
-7. Optimization suggestions and endpoint coverage (focused)
-   - Optimization suggestions (apply when relevant):
-     - For ID-based retrieval, use `Map<Long, T>` over list scans
-     - Seed data once and reuse; avoid per-request rebuilds
-     - Prefer single-threaded streams; avoid parallel unless CPU-bound with measured gains
-     - Expose immutable/unmodifiable collections for shared read-only data
+7. Generalized optimization suggestions and endpoint coverage
+   - Optimization suggestions (lightweight, generalized heuristics):
+   ```bash
+   CHANGED=$(git diff --name-only | grep '^src/main/java/.*\.java$' || true)
+   if [ -z "$CHANGED" ]; then CHANGED=$(git ls-files src/main/java | grep '\.java$'); fi
+   mkdir -p target
+   S=target/optimization-suggestions.txt
+   : > "$S"
+   echo "== Potential nested loops (consider preindexing/maps) ==" | tee -a "$S"
+   awk '/for \(/ {c[FILENAME]++} END{for(f in c) if(c[f]>1) print f" : "c[f]" loops"}' $CHANGED 2>/dev/null | tee -a "$S"
+   echo "\n== List scans / contains (consider Set/Map) ==" | tee -a "$S"
+   grep -nE '\.contains\(|\.stream\(\)\.filter\(' $CHANGED 2>/dev/null | head -n 200 | tee -a "$S"
+   echo "\n== Allocations in loops (look for 'new' near loops) ==" | tee -a "$S"
+   grep -nE 'for \(|while \(' -n $CHANGED 2>/dev/null | cut -d: -f1 | sort -u | xargs -I{} sh -c 'grep -n "new \|Optional.of\|Collectors\.toList" {} | head -n 5' 2>/dev/null | tee -a "$S"
+   echo "\n== Parallel usage (verify it helps; otherwise remove) ==" | tee -a "$S"
+   grep -nE '\.parallelStream\(|\.parallel\(\)' $CHANGED 2>/dev/null | tee -a "$S"
+   echo "\n== Blocking calls on request path (move off-thread/cached) ==" | tee -a "$S"
+   grep -nE 'Thread\.sleep\(|\.join\(|Files\.|FileInputStream|HttpURLConnection|RestTemplate\.' $CHANGED 2>/dev/null | tee -a "$S"
+   echo "\n== Synchronization (check contention) ==" | tee -a "$S"
+   grep -nE 'synchronized\s*\(|synchronized\s+[^\(]' $CHANGED 2>/dev/null | tee -a "$S"
+   echo "\nSuggestions written to $S" | tee -a "$S"
+   ```
    - Endpoint coverage check (edit CLASS/METHOD as needed):
    ```bash
    mvn -B org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report
-   CLASS=org/openapitools/api/PetApiController
-   METHOD=getPetById
-   XML=target/site/jacoco/jacoco.xml
-   echo "Coverage for $CLASS.$METHOD"
-   echo -n "LINE missed/covered: "
-   xmllint --xpath 'concat(//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="LINE"]/@missed,"/",//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="LINE"]/@covered)' "$XML" 2>/dev/null || echo "n/a"
-   echo -n "BRANCH missed/covered: "
-   xmllint --xpath 'concat(//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="BRANCH"]/@missed,"/",//class[@name="'"$CLASS"'"]/method[@name="'"$METHOD"'"]/counter[@type="BRANCH"]/@covered)' "$XML" 2>/dev/null || echo "n/a"
-   echo "Full report: target/site/jacoco/index.html"
+   echo "JaCoCo report: target/site/jacoco/index.html"
+   # Optional: set CLASS=org/openapitools/api/YourController METHOD=yourMethod and inspect jacoco.xml
    ```
-   - If branch misses are non-zero, add tests for alternate paths (e.g., not-found branch, config flag path)
+   - If branch misses are found in the report, add tests for alternate paths (e.g., not-found, config flags)
 
 8. Commit and push
    - Prompt: "Provide the commit message (plain text only). Reply with the message only."
