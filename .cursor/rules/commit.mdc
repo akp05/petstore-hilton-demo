@@ -22,14 +22,10 @@ description: Validate, then commit and push with minimal prompts
      -Drewrite.activeRecipes=org.openrewrite.java.RemoveUnusedImports
    ```
 
-3. Scan for severe third‑party vulnerabilities (CVSS ≥ 7)
-   - Generates reports under `target/thirdParty`
-   - Fails if severe issues are found
+3. Scan for vulnerable libraries (no NVD key required)
+   - Uses Sonatype OSS Index audit; fails on vulnerabilities
    ```bash
-   mvn -B org.owasp:dependency-check-maven:9.2.0:check \
-     -Dformats=HTML,JSON \
-     -DfailOnCVSS=7 \
-     -DoutputDirectory=target
+   mvn -B org.sonatype.ossindex.maven:ossindex-maven-plugin:3.3.0:audit -Dossindex.fail=true
    ```
 
 4. Scan code for OWASP Top 10 categories (SAST)
