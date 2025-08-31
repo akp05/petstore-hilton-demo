@@ -1,0 +1,116 @@
+---
+description: Convert a natural-language statement into minimal, standards-compliant code changes in src/main/java
+globs:
+alwaysApply: false
+---
+
+### Purpose
+- Take a user statement like "Add a service to fetch Pet by name and expose it via /v2/pet/byName?name=Fluffy" and implement only the necessary application code under `src/main/java`, aligned with existing structure and standards.
+
+### Standards to follow
+- Use constructor injection for Spring components
+- Add JavaDoc comments for all public methods and fields
+- Prefer null-safety (avoid returning null; use Optional where reasonable)
+- Keep changes minimal and backward-compatible
+
+### Inputs (from the statement)
+- Desired behavior (what to add/change)
+- Affected layer(s): model, service, controller, configuration
+- For REST: HTTP method, path, params/body, success status, key response fields
+
+### Decision guide
+- If the change adds/changes a REST endpoint that should be part of the contract:
+  - Update the OpenAPI spec and run `@regen.mdc` instead of hand-editing generated controllers
+- If implementing internal logic or glue code without changing the contract:
+  - Add/update service/component classes and call them from existing controllers
+
+### Procedure
+1) Analyze statement and locate targets
+   - Search in `src/main/java/org/openapitools/...` for the relevant package
+   - Identify whether there is an existing controller/service to extend
+
+2) Implement minimal code edits
+   - Create/extend a Spring `@Service` or `@Component` using constructor injection
+   - Wire into existing controllers where appropriate
+   - Add JavaDoc for public APIs
+
+3) If REST contract must change
+   - Update `petstore-<version>.yaml` accordingly
+   - Run:
+   ```bash
+   @regen.mdc
+   ```
+
+4) Cleanup and formatting
+   - Remove unused imports and trivial unused code
+   ```bash
+   mvn -B org.openrewrite.maven:rewrite-maven-plugin:5.41.0:run \
+     -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-java:1.31.0 \
+     -Drewrite.activeRecipes=org.openrewrite.staticanalysis.RemoveUnusedImports,org.openrewrite.staticanalysis.UnusedLocalVariables,org.openrewrite.staticanalysis.UnusedPrivateMethod
+   ```
+   - Apply shared formatter
+   ```bash
+   @format.mdc
+   ```
+
+5) Build and test
+```bash
+@run-build.mdc
+```
+
+6) Optional: generate integration tests for the new behavior
+```bash
+@ffis.mdc
+```
+
+### Service template (Java)
+```java
+package org.openapitools.service;
+
+import org.springframework.stereotype.Service;
+
+/**
+ * Provides operations related to pets.
+ */
+@Service
+public class PetLookupService {
+    /**
+     * Find a pet name by its identifier.
+     * @param petId unique pet identifier
+     * @return the pet name if found, otherwise an empty Optional
+     */
+    public java.util.Optional<String> findPetNameById(long petId) {
+        // Implement minimal required logic
+        return java.util.Optional.empty();
+    }
+}
+```
+
+### Controller wiring example (Java)
+```java
+package org.openapitools.api;
+
+import org.openapitools.service.PetLookupService;
+import org.springframework.http.ResponseEntity;
+
+public class PetApiController {
+    private final PetLookupService petLookupService;
+
+    public PetApiController(PetLookupService petLookupService) {
+        this.petLookupService = petLookupService;
+    }
+
+    /**
+     * Get pet name by id
+     */
+    public ResponseEntity<String> getPetNameById(Long petId) {
+        return petLookupService.findPetNameById(petId)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+}
+```
+
+### Notes
+- Do not place custom logic directly inside generated code blocks that may be overwritten by regeneration. Prefer delegating to services/components you control.
+- If you must change the contract, prefer updating OpenAPI and regenerating to keep drift at zero.
