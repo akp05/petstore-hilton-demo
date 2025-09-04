@@ -7,5 +7,4 @@ AI agent in consideration:
 
 
 Observations:
-1. Create a new project with and debugging related to dependency is hard and even halucinate. 
-2. Can't give prompt like it doesn't work need to give specific prompt like run mvn compile and fix if the issues are there.
+1. Can't give prompt like, "it doesn't work" need to give specific prompt like run mvn compile and fix if the issues are there.
